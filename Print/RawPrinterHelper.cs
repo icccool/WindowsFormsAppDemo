@@ -121,7 +121,12 @@ namespace H3POS.Protocol.DocPrint
             Marshal.Copy(Bytes, 0, pBytes, Bytes.Length);
 
             // Send the converted ANSI string to the printer.
-            SendBytesToPrinter(szPrinterName, pBytes, Bytes.Length);
+            bool dwError = SendBytesToPrinter(szPrinterName, pBytes, Bytes.Length);
+            if (dwError)
+            {
+                Console.WriteLine("-------------------------");
+            }
+
             Marshal.FreeCoTaskMem(pBytes);
             return true;
         }
