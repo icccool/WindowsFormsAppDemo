@@ -9,13 +9,17 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WindowsFormsAppDemo.Api;
 using WindowsFormsAppDemo.cef;
 using WindowsFormsAppDemo.http;
 using WindowsFormsAppDemo.Print;
+using WindowsFormsAppDemo.Time;
 
 namespace WindowsFormsAppDemo
 {
@@ -43,7 +47,7 @@ namespace WindowsFormsAppDemo
             {
                 KeyboardHandler = new CEFKeyBoardHander()
             };
-            this.panel1.Controls.Add(browser);
+            //this.panel1_Paint.Controls.Add(browser);
             browser.Dock = DockStyle.Fill;
         }
 
@@ -123,7 +127,7 @@ namespace WindowsFormsAppDemo
             PrintDocument printDocument1 = new PrintDocument();
             printDocument1.DefaultPageSettings.PaperSize = new PaperSize("aa", 180, 160);
             printDocument1.PrintPage += new PrintPageEventHandler(PrintPageEvent);
-           // printDocument1.Print();
+            // printDocument1.Print();
             pa.Document = printDocument1;
             pa.ShowDialog();//预览
         }
@@ -138,7 +142,7 @@ namespace WindowsFormsAppDemo
             {
                 Bitmap bmp = c.GetCodeImage(s, Code128.Encode.Code128B, ev.Graphics);
             }
-            else 
+            else
             {
                 Bitmap bmp = c.GetCodeImage(s, Code128.Encode.Code128C, ev.Graphics);
             }
@@ -178,7 +182,7 @@ namespace WindowsFormsAppDemo
             Font font = new Font("黑体", 20);
             x = leftMargin;
             y = topMargin;
-           
+
             //条码
             String sourceText = "A10007016201";
             Image image;
@@ -242,9 +246,58 @@ namespace WindowsFormsAppDemo
             }
         }
 
+        /// <summary>
+        /// 打印58小票button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button7_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void button7_Click_1(object sender, EventArgs e)
+        {
+            //
+            //取得当前系统时间
+            //DateTime t = DateTime.Now;
+            //在当前时间上加上一周
+            //t = t.AddDays(7);
+
+            DateTime netDate = GetInternetDate();
+            //转换System.DateTime到SYSTEMTIME
+            SYSTEMTIME st = new SYSTEMTIME();
+            st.FromDateTime(netDate);
+            //调用Win32 API设置系统时间
+            Win32API.SetLocalTime(ref st);
+            //显示当前时间
+            MessageBox.Show(DateTime.Now.ToString());
+        }
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+        public DateTime GetInternetDate()
+        {
+            try
+            {
+                var myHttpWebRequest = (HttpWebRequest)WebRequest.Create("https://www.baidu.com/");
+                myHttpWebRequest.Timeout = 3000;
+                var response = myHttpWebRequest.GetResponse();
+                string todaysDates = response.Headers["date"];
+                DateTime dt = DateTime.ParseExact(todaysDates,
+                                           "ddd, dd MMM yyyy HH:mm:ss 'GMT'",
+                                           CultureInfo.InvariantCulture.DateTimeFormat,
+                                           DateTimeStyles.AssumeUniversal);
+                response.Close();
+                return dt;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
+            return DateTime.Now;
         }
     }
 }
