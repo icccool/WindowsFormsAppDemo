@@ -10,6 +10,7 @@ using System.Data;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -42,27 +43,20 @@ namespace WindowsFormsAppDemo
         public void InitBrowser()
         {
             Console.WriteLine(Cef.ChromiumVersion);
-            //Cef.Initialize(new CefSettings());
+            //Cef.Initialize(new CefSharp.WinForms.CefSettings());
             browser = new ChromiumWebBrowser("www.baidu.com")
             {
                 KeyboardHandler = new CEFKeyBoardHander()
             };
-            //this.panel1_Paint.Controls.Add(browser);
+            //this.panel1.Contains.Add(browser);
             browser.Dock = DockStyle.Fill;
         }
 
 
         private void button1_Click(object sender, EventArgs e)
         {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("     力东上元路(二店)  \n");
-            sb.Append("*************************************\n");
-            sb.Append("进场时间：" + DateTime.Now.ToString() + "\n");
-            sb.Append("出场时间：" + DateTime.Now.AddHours(2).ToString() + "\n");
-            sb.Append("停车时长：   2   小时\n");
-            sb.Append("停车收费：   5     元\n");
-            sb.Append("*************************************\n");
-            new PosPrint().Print(sb.ToString());
+            string printContent = getPrintContent();
+            new TestPrinter2().Print(printContent, false);
         }
 
         /// <summary>
@@ -164,7 +158,7 @@ namespace WindowsFormsAppDemo
             pd.DefaultPageSettings.PaperSize = new PaperSize("票据", 150, 80);//设置纸张的大小
             pa.Document = pd;
             pd.Print();
-            //pa.ShowDialog();//预览
+            //pa.ShowDialog();//预览 
         }
 
         /// <summary>
@@ -174,7 +168,6 @@ namespace WindowsFormsAppDemo
         /// <param name="e"></param>
         void DrawPage(object sender, PrintPageEventArgs e)
         {
-
             float x, y;
             float leftMargin = 0, topMargin = 0;
 
@@ -187,8 +180,8 @@ namespace WindowsFormsAppDemo
             String sourceText = "A10007016201";
             Image image;
             BarcodeLib.Barcode b = new BarcodeLib.Barcode();
-            b.BackColor = System.Drawing.Color.White;//设置图片背景
-            b.ForeColor = System.Drawing.Color.Black;//设置字体颜色
+            b.BackColor = Color.White;//设置图片背景
+            b.ForeColor = Color.Black;//设置字体颜色
             b.ImageFormat = System.Drawing.Imaging.ImageFormat.Jpeg;
             font = new Font("宋体", 1);
             b.LabelFont = font;
@@ -253,10 +246,9 @@ namespace WindowsFormsAppDemo
         /// <param name="e"></param>
         private void button7_Click(object sender, EventArgs e)
         {
-
         }
 
-        private void button7_Click_1(object sender, EventArgs e)
+        private void buttonFixDateTIme(object sender, EventArgs e)
         {
             //
             //取得当前系统时间
@@ -274,11 +266,59 @@ namespace WindowsFormsAppDemo
             MessageBox.Show(DateTime.Now.ToString());
         }
 
-        private void panel1_Paint(object sender, PaintEventArgs e)
+        /// <summary>
+        /// 模拟POS小票打印
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button8_Click(object sender, EventArgs e)
         {
+            StringBuilder stringBuilder = new StringBuilder();
+            using (StreamReader sr = new StreamReader("D:/seafile/hydee/力东/打印小票json.txt"))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    stringBuilder.Append(line);
+                }
+            }
+            new PosPrintBill(stringBuilder.ToString()).print();
 
         }
-        public DateTime GetInternetDate()
+
+        /// <summary>
+        /// 打印预览
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void buttonPrintPreview(object sender, EventArgs e)
+        {
+
+            string printContent = getPrintContent();
+            new TestPrinter2().Print(printContent, true);
+
+        }
+
+        //====================private======================================
+        private string getPrintContent()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("     力东上元路(二店)  \n");
+            sb.Append("*************************************\n");
+            sb.Append("进场时间：" + DateTime.Now.ToString() + "\n");
+            sb.Append("出场时间：" + DateTime.Now.AddHours(2).ToString() + "\n");
+            sb.Append("停车时长：   2   小时\n");
+            sb.Append("停车收费：   5     元\n");
+            sb.Append("*************************************\n");
+            return sb.ToString();
+        }
+
+
+        /// <summary>
+        /// 获得网络时间
+        /// </summary>
+        /// <returns></returns>
+        private DateTime GetInternetDate()
         {
             try
             {
@@ -298,6 +338,20 @@ namespace WindowsFormsAppDemo
                 MessageBox.Show(e.Message);
             }
             return DateTime.Now;
+        }
+
+
+        /// <summary>
+        /// 打开新的窗口
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button10_Click(object sender, EventArgs e)
+        {
+
+            Form2 form2 = new Form2();
+            form2.ShowDialog();
+
         }
     }
 }

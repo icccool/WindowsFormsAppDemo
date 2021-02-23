@@ -15,9 +15,15 @@ namespace WindowsFormsAppDemo.Print
 
     public class Code128
     {
-
         private DataTable m_Code128 = new DataTable();
+
         private uint m_Height = 40;
+
+        private int defaultX = 50;
+
+        private int defaultY = 20;
+
+
         /// <summary>
         /// 高度
         /// </summary>
@@ -32,6 +38,10 @@ namespace WindowsFormsAppDemo.Print
         /// 放大倍数
         /// </summary>
         public byte Magnify { get { return m_Magnify; } set { m_Magnify = value; } }
+
+        public int DefaultX { get => defaultX; set => defaultX = value; }
+        public int DefaultY { get => defaultY; set => defaultY = value; }
+
         /// <summary>
         /// 条码类别
         /// </summary>
@@ -176,8 +186,9 @@ namespace WindowsFormsAppDemo.Print
             {
                 case Encode.Code128C:
                     _Examine = 105;
-                    if (!((p_Text.Length & 1) == 0)) { 
-                        throw new Exception("128C长度必须是偶数");
+                    if (!((p_Text.Length & 1) == 0))
+                    {
+                        Console.WriteLine("长度必须是偶数" + p_Text);
                     }
                     while (p_Text.Length != 0)
                     {
@@ -188,7 +199,7 @@ namespace WindowsFormsAppDemo.Print
                         }
                         catch
                         {
-                            throw new Exception("128C必须是数字！");
+                            Console.WriteLine("长度必须是偶数" + p_Text);
                         }
                         _Text += GetValue(p_Code, p_Text.Substring(0, 2), ref _Temp);
                         _TextNumb.Add(_Temp);
@@ -197,7 +208,11 @@ namespace WindowsFormsAppDemo.Print
                     break;
                 case Encode.EAN128:
                     _Examine = 105;
-                    if (!((p_Text.Length & 1) == 0)) throw new Exception("EAN128长度必须是偶数");
+                    if (!((p_Text.Length & 1) == 0))
+                    {
+                        
+                        Console.WriteLine("EAN128长度必须是偶数");
+                    }
                     _TextNumb.Add(102);
                     _Text += "411131";
                     while (p_Text.Length != 0)
@@ -209,7 +224,7 @@ namespace WindowsFormsAppDemo.Print
                         }
                         catch
                         {
-                            throw new Exception("128C必须是数字！");
+                            Console.WriteLine("长度必须是偶数" + p_Text);
                         }
                         _Text += GetValue(Encode.Code128C, p_Text.Substring(0, 2), ref _Temp);
                         _TextNumb.Add(_Temp);
@@ -230,14 +245,20 @@ namespace WindowsFormsAppDemo.Print
                     {
                         int _Temp = 0;
                         string _ValueCode = GetValue(p_Code, p_Text.Substring(0, 1), ref _Temp);
-                        if (_ValueCode.Length == 0) throw new Exception("无效的字符集!" + p_Text.Substring(0, 1).ToString());
+                        if (_ValueCode.Length == 0)
+                        {
+                            Console.WriteLine("无效的字符集!" + p_Text.Substring(0, 1).ToString());
+                        }
                         _Text += _ValueCode;
                         _TextNumb.Add(_Temp);
                         p_Text = p_Text.Remove(0, 1);
                     }
                     break;
             }
-            if (_TextNumb.Count == 0) throw new Exception("错误的编码,无数据");
+            if (_TextNumb.Count == 0)
+            {
+                Console.WriteLine("错误的编码,无数据");
+            }
             _Text = _Text.Insert(0, GetValue(_Examine)); //获取开始位
 
             for (int i = 0; i != _TextNumb.Count; i++)
@@ -262,7 +283,10 @@ namespace WindowsFormsAppDemo.Print
         {
             if (m_Code128 == null) return "";
             DataRow[] _Row = m_Code128.Select(p_Code.ToString() + "='" + p_Value + "'");
-            if (_Row.Length != 1) throw new Exception("错误的编码" + p_Value.ToString());
+            if (_Row.Length != 1)
+            {
+                Console.WriteLine("错误的编码" + p_Value.ToString());
+            }
             p_SetID = Int32.Parse(_Row[0]["ID"].ToString());
             return _Row[0]["BandCode"].ToString();
         }
@@ -274,7 +298,11 @@ namespace WindowsFormsAppDemo.Print
         private string GetValue(int p_CodeId)
         {
             DataRow[] _Row = m_Code128.Select("ID='" + p_CodeId.ToString() + "'");
-            if (_Row.Length != 1) throw new Exception("验效位的编码错误" + p_CodeId.ToString());
+            if (_Row.Length != 1)
+            {
+                Console.WriteLine("验效位的编码错误" + p_CodeId.ToString());
+
+            }
             return _Row[0]["BandCode"].ToString();
         }
         /// <summary>
@@ -290,35 +318,39 @@ namespace WindowsFormsAppDemo.Print
             {
                 _Width += Int32.Parse(_Value[i].ToString()) * (m_Magnify + 1);
             }
-            Bitmap _CodeImage = new Bitmap(_Width + 4, (int)m_Height + 12);
+            Bitmap _CodeImage = new Bitmap(_Width + 10, (int)m_Height + 12);
             Graphics _Garphics = g;
             //Pen _Pen;
-            int _LenEx = 6;
-            int _TopEx = 4;
+            int x = DefaultX;
+            int y = DefaultY;
             if (g == null)
             {
                 Graphics.FromImage(_CodeImage);
-                _LenEx = 2;
-                _TopEx = 0;
+                x = 2;
+                y = 0;
             }
 
+            //打印条码
             for (int i = 0; i != _Value.Length; i++)
             {
                 int _ValueNumb = Int32.Parse(_Value[i].ToString()) * (m_Magnify + 1); //获取宽和放大系数
                 if (!((i & 1) == 0))
                 {
                     //_Pen = new Pen(Brushes.White, _ValueNumb);
-                    _Garphics.FillRectangle(Brushes.White, new Rectangle(_LenEx, _TopEx, _ValueNumb, (int)m_Height));
+                    _Garphics.FillRectangle(Brushes.White, new Rectangle(x, y, _ValueNumb, (int)m_Height));
                 }
                 else
                 {
                     //_Pen = new Pen(Brushes.Black, _ValueNumb);
-                    _Garphics.FillRectangle(Brushes.Black, new Rectangle(_LenEx, _TopEx, _ValueNumb, (int)m_Height));
+                    _Garphics.FillRectangle(Brushes.Black, new Rectangle(x, y, _ValueNumb, (int)m_Height));
                 }
                 //_Garphics.(_Pen, new Point(_LenEx, 0), new Point(_LenEx, m_Height));
-                _LenEx += _ValueNumb;
+                x += _ValueNumb;
             }
-            _Garphics.DrawString(sourceText, new Font("宋体", 10f), new SolidBrush(Color.Black), new PointF(2, m_Height + _TopEx));
+
+            //打印数字码
+            _Garphics.DrawString(sourceText, new Font("宋体", 10f), new SolidBrush(Color.Black), new PointF(DefaultX, m_Height + y));
+
             if (_Garphics != g)
             {
                 _Garphics.Dispose();
@@ -351,4 +383,6 @@ namespace WindowsFormsAppDemo.Print
         //结果为starc +12 +34 +56 +78 +47 +end
 
     }
+
 }
+
